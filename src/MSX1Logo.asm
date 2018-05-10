@@ -37,6 +37,10 @@ Loop:
 	call MSX1Logo_WaitBetweenEffects
 	call MSX1Logo_DrawColorsEffect5
 	call MSX1Logo_WaitBetweenEffects
+	call MSX1Logo_DrawColorsEffect6
+	call MSX1Logo_WaitBetweenEffects
+	call MSX1Logo_DrawColorsEffect7
+	call MSX1Logo_WaitBetweenEffects
 	jr Loop
 	ENDP
 
@@ -173,6 +177,58 @@ Loop:
 	add a,2
 	cp 136
 	jr c,Loop
+	ret
+	ENDP
+
+MSX1Logo_DrawColorsEffect6: PROC
+	ld a,56
+Loop:
+	call MSX1Logo_WaitFrame
+	call MSX1Logo_DrawColorLineMirror
+	add a,4
+	call MSX1Logo_DrawColorLineMirror
+	add a,4
+	cp 136
+	jr c,Loop
+	ld a,57
+Loop2:
+	call MSX1Logo_WaitFrame
+	call MSX1Logo_DrawColorLineMirror
+	add a,4
+	call MSX1Logo_DrawColorLineMirror
+	add a,4
+	cp 136
+	jr c,Loop2
+	ret
+	ENDP
+
+MSX1Logo_DrawColorsEffect7: PROC
+	ld a,56
+Loop:
+	call MSX1Logo_WaitFrame
+	call MSX1Logo_DrawColorLine
+	add a,2
+	call MSX1Logo_DrawColorLine
+	add a,2
+	call MSX1Logo_DrawColorLine
+	add a,2
+	call MSX1Logo_DrawColorLine
+	add a,2
+	cp 136
+	jr c,Loop
+	ld a,57
+Loop2:
+	call MSX1Logo_WaitFrame
+	call MSX1Logo_DrawColorLineMirror
+	add a,2
+	call MSX1Logo_DrawColorLineMirror
+	add a,2
+	call MSX1Logo_DrawColorLineMirror
+	add a,2
+	call MSX1Logo_DrawColorLineMirror
+	add a,2
+	cp 136
+	jr c,Loop2
 	ret
 	ENDP
 
