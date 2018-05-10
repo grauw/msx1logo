@@ -28,6 +28,8 @@ MSX1Logo_Main: PROC
 Loop:
 	call MSX1Logo_DrawColors
 	call MSX1Logo_WaitBetweenEffects
+	call MSX1Logo_DrawColorsEffect2
+	call MSX1Logo_WaitBetweenEffects
 	jr Loop
 	ENDP
 
@@ -108,6 +110,26 @@ Loop:
 	djnz Loop
 	call MSX1Logo_WaitFrame
 	call ENASCR
+	ret
+	ENDP
+
+MSX1Logo_DrawColorsEffect2: PROC
+	ld hl,(GRPCOL)
+	ld de,0E3H * 8
+	add hl,de
+	ld b,10
+Loop:
+	call MSX1Logo_WaitFrame
+	push bc
+	push hl
+	ld bc,26 * 8
+	ld a,0F1H
+	call FILVRM
+	pop hl
+	pop bc
+	ld de,32 * 8
+	add hl,de
+	djnz Loop
 	ret
 	ENDP
 
