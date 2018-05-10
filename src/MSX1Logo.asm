@@ -1,6 +1,8 @@
 ;
 ; MSX1 logo
 ;
+DISSCR: equ 41H
+ENASCR: equ 44H
 WRTVRM: equ 4DH
 FILVRM: equ 56H
 LDIRVM: equ 5CH
@@ -11,6 +13,7 @@ GRPCGP: equ 0F3CBH
 FORCLR: equ 0F3E9H
 BAKCLR: equ 0F3EAH
 BDRCLR: equ 0F3EBH
+JIFFY: equ 0FC9EH
 
 	org 4000H
 
@@ -75,6 +78,7 @@ NoWrite:
 	ENDP
 
 MSX1Logo_DrawColors: PROC
+	call DISSCR
 	ld hl,(GRPCOL)
 	ld de,0E3H * 8
 	add hl,de
@@ -90,6 +94,27 @@ Loop:
 	ld de,32 * 8
 	add hl,de
 	djnz Loop
+	call MSX1Logo_WaitFrame
+	call ENASCR
+	ret
+	ENDP
+
+MSX1Logo_WaitFrame:
+	push bc
+	ld b,1
+	call MSX1Logo_Wait
+	pop bc
+	ret
+
+; b = frames to wait
+MSX1Logo_Wait: PROC
+	ld a,(JIFFY)
+	ld c,a
+Loop:
+	ld a,(JIFFY)
+	sub c
+	cp b
+	jr c,Loop
 	ret
 	ENDP
 
