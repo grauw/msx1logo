@@ -1,6 +1,7 @@
 ;
 ; MSX1 logo
 ;
+VDP.DW: equ 07H
 ROMVER1: equ 2BH
 DISSCR: equ 41H
 ENASCR: equ 44H
@@ -114,22 +115,49 @@ Loop:
 	ENDP
 
 MSX1Logo_DrawColorsEffect2: PROC
-	ld hl,(GRPCOL)
-	ld de,0E3H * 8
-	add hl,de
-	ld b,10
+	ld a,56
 Loop:
 	call MSX1Logo_WaitFrame
-	push bc
-	push hl
-	ld bc,26 * 8
+	call MSX1Logo_DrawColorLine
+	inc a
+	call MSX1Logo_DrawColorLine
+	inc a
+	call MSX1Logo_DrawColorLine
+	inc a
+	call MSX1Logo_DrawColorLine
+	inc a
+	cp 136
+	jr c,Loop
+	ret
+	ENDP
+
+; a = line
+MSX1Logo_DrawColorLine: PROC
+	push af
+	ld h,a
+	and 07H
+	add a,3 << 3
+	ld l,a
+	srl h
+	srl h
+	srl h
+	ld bc,(GRPCOL)
+	add hl,bc
+	set 6,h
+	ld de,8
+	ld a,(VDP.DW)
+	ld c,a
+	ld b,26
 	ld a,0F1H
-	call FILVRM
-	pop hl
-	pop bc
-	ld de,32 * 8
+Loop:
+	inc c
+	out (c),l
+	out (c),h
+	dec c
+	out (c),a
 	add hl,de
 	djnz Loop
+	pop af
 	ret
 	ENDP
 
@@ -146,10 +174,12 @@ MSX1Logo_ClearColors:
 	ret
 
 MSX1Logo_WaitFrame:
+	push af
 	push bc
 	ld b,1
 	call MSX1Logo_Wait
 	pop bc
+	pop af
 	ret
 
 ; b = frames to wait
