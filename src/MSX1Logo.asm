@@ -43,6 +43,8 @@ Loop:
 	call MSX1Logo_WaitBetweenEffects
 	call MSX1Logo_DrawColorsEffect8
 	call MSX1Logo_WaitBetweenEffects
+	call MSX1Logo_DrawColorsEffect9
+	call MSX1Logo_WaitBetweenEffects
 	jr Loop
 	ENDP
 
@@ -248,6 +250,32 @@ Loop2:
 	cp 136
 	jr c,Loop2
 	pop bc
+	djnz Loop
+	ret
+	ENDP
+
+MSX1Logo_DrawColorsEffect9: PROC
+STEP: equ 10
+	ld b,STEP * 2
+	ld a,56 - STEP * STEP - 1
+Loop:
+	push af
+	push bc
+	call MSX1Logo_WaitFrame
+	ld b,STEP
+Loop2:
+	push bc
+	cp 56
+	jr c,Skip
+	cp 136
+	call c,MSX1Logo_DrawColorLine
+Skip:
+	pop bc
+	add a,STEP - 1
+	djnz Loop2
+	pop bc
+	pop af
+	add a,STEP
 	djnz Loop
 	ret
 	ENDP
