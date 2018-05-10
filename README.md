@@ -6,8 +6,6 @@ Copyright 2018 Laurens Holst
 Project information
 -------------------
 
-Logo by Parn.
-
 Author: Laurens Holst <laurens.nospam@grauw.nl>  
 Site: <https://bitbucket.org/grauw/msx1logo>  
 License: Simplified BSD License (code)
@@ -23,6 +21,8 @@ the successors or suggest one of their features. A static logo is too boring,
 but it should not be much more than that. So I’ve tried to come up with a few
 simple animations where the logo position remains static, but it appears in
 some fun ways.
+
+Based on Parn’s logo.
 
 
 System Requirements
