@@ -1,6 +1,7 @@
 ;
 ; MSX1 logo
 ;
+ROMVER1: equ 2BH
 DISSCR: equ 41H
 ENASCR: equ 44H
 WRTVRM: equ 4DH
@@ -21,11 +22,22 @@ JIFFY: equ 0FC9EH
 	dw MSX1Logo_Main
 	dw 0, 0, 0, 0, 0, 0
 
-MSX1Logo_Main:
+MSX1Logo_Main: PROC
 	call MSX1Logo_InitScreen
 	call MSX1Logo_DrawPatterns
+Loop:
 	call MSX1Logo_DrawColors
-	jr $
+	call MSX1Logo_WaitBetweenEffects
+	jr Loop
+	ENDP
+
+MSX1Logo_WaitBetweenEffects:
+	ld b,30
+	call MSX1Logo_WaitDeciSeconds
+	call MSX1Logo_ClearColors
+	ld b,10
+	call MSX1Logo_WaitDeciSeconds
+	ret
 
 MSX1Logo_InitScreen:
 	ld a,15
@@ -99,6 +111,18 @@ Loop:
 	ret
 	ENDP
 
+MSX1Logo_ClearColors:
+	call MSX1Logo_WaitFrame
+	call DISSCR
+	ld hl,(GRPCOL)
+	ld de,0E0H * 8
+	add hl,de
+	ld bc,140H * 8
+	ld a,04H
+	call FILVRM
+	call ENASCR
+	ret
+
 MSX1Logo_WaitFrame:
 	push bc
 	ld b,1
@@ -116,6 +140,28 @@ Loop:
 	cp b
 	jr c,Loop
 	ret
+	ENDP
+
+; b = 1/10ths of a second to wait (max. 42)
+MSX1Logo_WaitDeciSeconds: PROC
+	ld a,(ROMVER1)
+	bit 7,a
+	jr nz,Freq50Hz
+Freq60Hz:
+	ld a,b
+	add a,a
+	add a,a
+	add a,b
+	add a,b
+	ld b,a
+	jp MSX1Logo_Wait
+Freq50Hz:
+	ld a,b
+	add a,a
+	add a,a
+	add a,b
+	ld b,a
+	jp MSX1Logo_Wait
 	ENDP
 
 MSX1Logo_bitmapTransitions:
