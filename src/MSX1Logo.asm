@@ -17,6 +17,9 @@ BAKCLR: equ 0F3EAH
 BDRCLR: equ 0F3EBH
 JIFFY: equ 0FC9EH
 
+MSX1Logo_SPAN_BUFFER: equ 0E000H
+MSX1Logo_SPAN_LINE_SIZE: equ 16
+
 	org 4000H
 
 	db "AB"
@@ -68,11 +71,28 @@ MSX1Logo_InitScreen:
 	ret
 
 MSX1Logo_DrawPatterns: PROC
+	call MSX1Logo_DrawVectorEdges
 	ld hl,(GRPCGP)
 	ld de,65 * 32
 	add hl,de
 	exx
-	ld hl,MSX1Logo_bitmapTransitions
+	ld hl,MSX1Logo_SPAN_BUFFER + 65 * MSX1Logo_SPAN_LINE_SIZE
+	ld b,192
+Loop:
+	push bc
+	push hl
+	call MSX1Logo_DrawPatternLine
+	pop hl
+	pop bc
+	ld de,MSX1Logo_SPAN_LINE_SIZE
+	add hl,de
+	djnz Loop
+	ret
+	ENDP
+
+; hl = span edges
+; hl' = pattern generator table position
+MSX1Logo_DrawPatternLine: PROC
 	ld c,0
 	ld de,0001H
 Loop:
@@ -104,6 +124,126 @@ NoWrite:
 	cpl
 	ld d,a
 	jr Loop
+	ENDP
+
+MSX1Logo_DrawVectorEdges: PROC
+	ld hl,MSX1Logo_SPAN_BUFFER
+	ld de,MSX1Logo_SPAN_BUFFER + 1
+	ld bc,256 * MSX1Logo_SPAN_LINE_SIZE - 1
+	ld (hl),0
+	ldir
+	ld hl,MSX1Logo_polygon
+	ld b,MSX1Logo_polygonCount - 1
+Loop:
+	push bc
+	ld e,(hl)
+	inc hl
+	ld d,(hl)
+	inc hl
+	ld c,(hl)
+	inc hl
+	ld b,(hl)
+	dec hl
+	push hl
+	call MSX1Logo_DrawEdge
+	pop hl
+	pop bc
+	djnz Loop
+	ret
+	ENDP
+
+; e = x
+; d = y
+; c = x2
+; b = y2
+MSX1Logo_DrawEdge: PROC
+	ld a,b
+	sub d
+	ret z
+	jr nc,NoSwap
+	ld d,b
+	ld h,e
+	ld e,c
+	ld c,h
+	neg
+NoSwap:
+	ld h,a  ; dy
+	ld a,c
+	sub e
+	ld c,1
+	jr nc,NoFlipX
+	ld c,-1
+	neg
+NoFlipX:
+	ld l,a  ; dx
+	sra a
+	sub h
+	ld b,h
+Loop:
+	call MSX1Logo_DrawEdgePixel
+	inc d
+	add a,l
+	jr nc,NoOverflow
+StepLoop:
+	bit 7,c
+	jr nz,Decrement
+	inc e
+	jr Continue
+Decrement:
+	dec e
+Continue:
+	sub h
+	jr nc,StepLoop
+NoOverflow:
+	djnz Loop
+	ret
+	ENDP
+
+; e = x
+; d = y
+MSX1Logo_DrawEdgePixel: PROC
+	push af
+	push bc
+	push de
+	push hl
+	ld l,d
+	ld h,0
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	ld bc,MSX1Logo_SPAN_BUFFER - 1
+	add hl,bc
+Loop:
+	inc hl
+	ld a,(hl)
+	and a
+	jr z,Insert
+	cp e
+	jr c,Loop
+	jr z,Remove
+Insert:
+	ld a,(hl)
+	ld (hl),e
+	inc hl
+	ld e,a
+	and a
+	jr nz,Insert
+	jr Continue
+Remove:
+	inc hl
+	ld a,(hl)
+	dec hl
+	ld (hl),a
+	inc hl
+	and a
+	jr nz,Remove
+Continue:
+	pop hl
+	pop de
+	pop bc
+	pop af
+	ret
 	ENDP
 
 MSX1Logo_DrawColors: PROC
@@ -377,70 +517,61 @@ Freq50Hz:
 	jp MSX1Logo_Wait
 	ENDP
 
-MSX1Logo_bitmapTransitions:
-	db 54, 70, 83, 99, 121, 173, 195, 214
-	db 54, 70, 83, 99, 118, 174, 194, 213
-	db 54, 70, 83, 99, 116, 175, 194, 213
-	db 54, 70, 83, 99, 114, 175, 193, 212
-	db 53, 71, 82, 100, 113, 176, 192, 211
-	db 53, 71, 82, 100, 112, 177, 192, 211
-	db 53, 71, 82, 100, 111, 177, 191, 210
-	db 53, 71, 82, 100, 110, 178, 190, 209
-	db 52, 72, 81, 101, 110, 179, 190, 209
-	db 52, 72, 81, 101, 109, 180, 189, 208
-	db 52, 72, 81, 101, 109, 180, 188, 207
-	db 52, 72, 81, 101, 108, 181, 188, 207
-	db 51, 73, 80, 102, 108, 182, 187, 206
-	db 51, 73, 80, 102, 108, 182, 186, 205
-	db 51, 73, 80, 102, 107, 183, 186, 205
-	db 51, 73, 80, 102, 107, 184, 185, 204
-	db 50, 74, 79, 103, 107, 127, 166, 203
-	db 50, 74, 79, 103, 107, 125, 166, 203
-	db 50, 74, 79, 103, 107, 124, 167, 202
-	db 50, 74, 79, 103, 107, 124, 168, 201
-	db 50, 74, 79, 103, 107, 124, 168, 201
-	db 49, 75, 78, 104, 107, 125, 169, 200
-	db 49, 75, 78, 104, 107, 127, 170, 199
-	db 49, 75, 78, 104, 107, 145, 170, 199
-	db 49, 75, 78, 104, 107, 148, 171, 198
-	db 48, 76, 77, 105, 108, 150, 172, 197
-	db 48, 76, 77, 105, 108, 152, 172, 197
-	db 48, 76, 77, 105, 108, 153, 173, 196
-	db 48, 76, 77, 105, 109, 154, 174, 195
-	db 47, 106, 109, 155, 174, 195
-	db 47, 106, 110, 156, 175, 194
-	db 47, 106, 110, 156, 174, 195
-	db 47, 106, 111, 157, 173, 196
-	db 46, 62, 63, 90, 91, 107, 112, 157, 173, 196
-	db 46, 62, 63, 90, 91, 107, 113, 158, 172, 197
-	db 46, 62, 63, 90, 91, 107, 114, 158, 171, 198
-	db 46, 62, 63, 90, 91, 107, 116, 158, 171, 198
-	db 45, 61, 64, 89, 92, 108, 118, 159, 170, 199
-	db 45, 61, 64, 89, 92, 108, 121, 159, 169, 200
-	db 45, 61, 64, 89, 92, 108, 139, 159, 169, 201
-	db 45, 61, 64, 89, 92, 108, 141, 159, 168, 201
-	db 44, 60, 65, 88, 93, 109, 142, 159, 167, 202
-	db 44, 60, 65, 88, 93, 109, 142, 159, 167, 203
-	db 44, 60, 65, 88, 93, 109, 142, 159, 166, 203
-	db 44, 60, 65, 88, 93, 109, 141, 159, 165, 184, 185, 204
-	db 44, 60, 65, 88, 93, 109, 139, 159, 165, 184, 186, 205
-	db 43, 59, 66, 87, 94, 159, 164, 183, 187, 205
-	db 43, 59, 66, 87, 94, 159, 163, 182, 187, 206
-	db 43, 59, 66, 87, 94, 158, 163, 182, 188, 207
-	db 43, 59, 66, 87, 94, 158, 162, 181, 189, 207
-	db 42, 58, 67, 86, 95, 158, 161, 180, 189, 208
-	db 42, 58, 67, 86, 95, 157, 161, 180, 190, 209
-	db 42, 58, 67, 86, 95, 157, 160, 179, 191, 210
-	db 42, 58, 67, 86, 95, 156, 159, 178, 192, 210
-	db 41, 57, 68, 85, 96, 156, 159, 178, 192, 211
-	db 41, 57, 68, 85, 96, 155, 158, 177, 193, 212
-	db 41, 57, 68, 85, 96, 154, 157, 176, 194, 212
-	db 41, 57, 68, 85, 96, 153, 157, 176, 194, 213
-	db 40, 56, 69, 84, 97, 152, 156, 175, 195, 214
-	db 40, 56, 69, 84, 97, 150, 155, 174, 196, 214
-	db 40, 56, 69, 84, 97, 148, 155, 174, 196, 215
-	db 40, 56, 69, 84, 97, 145, 154, 173, 197, 216
-	db 0, 0
+Vector: MACRO ?x, ?y
+	x:
+		db ?x
+	y:
+		db ?y
+	_size:
+	ENDM
+
+MSX1Logo_polygon:
+	Vector 40, 127
+	Vector 54, 65
+	Vector 69, 65
+	Vector 76, 95
+	Vector 83, 65
+	Vector 98, 65
+	Vector 109, 111
+	Vector 139, 111
+	Vector 142, 107
+	Vector 139, 103
+	Vector 121, 103
+	Vector 112, 98
+	Vector 107, 89
+	Vector 107, 79
+	Vector 112, 70
+	Vector 121, 65
+	Vector 172, 65
+	Vector 184, 81
+	Vector 195, 65
+	Vector 213, 65
+	Vector 193, 95
+	Vector 215, 127
+	Vector 197, 127
+	Vector 184, 108
+	Vector 172, 127
+	Vector 154, 127
+	Vector 175, 95
+	Vector 165, 80
+	Vector 126, 80
+	Vector 123, 84
+	Vector 126, 88
+	Vector 144, 88
+	Vector 153, 93
+	Vector 158, 102
+	Vector 158, 112
+	Vector 153, 121
+	Vector 144, 127
+	Vector 112, 127
+	Vector 97, 127
+	Vector 90, 97
+	Vector 83, 127
+	Vector 69, 127
+	Vector 62, 97
+	Vector 55, 127
+	Vector 40, 127
+MSX1Logo_polygonCount: equ ($ - MSX1Logo_polygon) / Vector._size
 
 ;
 	ds 08000H - $
