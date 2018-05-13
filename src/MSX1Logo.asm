@@ -77,7 +77,7 @@ MSX1Logo_DrawPatterns: PROC
 	add hl,de
 	exx
 	ld hl,MSX1Logo_SPAN_BUFFER + 65 * MSX1Logo_SPAN_LINE_SIZE
-	ld b,192
+	ld b,62
 Loop:
 	push bc
 	push hl
