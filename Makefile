@@ -9,4 +9,4 @@ copy: all
 	diskutil umount $(COPY_TARGET)
 
 run: all
-	openmsx -cart bin/msx1logo.rom -machine Sony_HB-75P
+	openmsx -cart bin/msx1logo.rom -machine Sony_HB-75P -script openmsx.tcl
