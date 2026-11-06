@@ -8,7 +8,7 @@ Project information
 
   * Author: Laurens Holst <laurens@grauw.nl>
   * Thread: <https://www.msx.org/forum/msx-talk/general-discussion/msx1-boot-logo>
-  * Source: <https://hg.sr.ht/~grauw/msx1logo>
+  * Source: <https://github.com/grauw/msx1logo>
   * License: Simplified BSD License (code)
 
 Every MSX generation got a fancier logo animation:
